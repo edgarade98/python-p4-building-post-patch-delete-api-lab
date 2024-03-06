@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
+import sys
+
+sys.path.append("/Users/winnie/python-p4-building-post-patch-delete-api-lab/") 
+
 from app import app
-from models import db, Bakery, BakedGood
+from server.models import db, Bakery, BakedGood
 
 with app.app_context():
 

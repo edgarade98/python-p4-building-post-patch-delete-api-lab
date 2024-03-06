@@ -3,7 +3,7 @@
 from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 
-from models import db, Bakery, BakedGood
+from server.models import db, Bakery, BakedGood
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -23,12 +23,45 @@ def bakeries():
     bakeries = [bakery.to_dict() for bakery in Bakery.query.all()]
     return make_response(  bakeries,   200  )
 
-@app.route('/bakeries/<int:id>')
-def bakery_by_id(id):
+@app.route('/bakeries/<int:id>', methods=['PATCH'])
+def update_bakery(id):
+    bakery = Bakery.query.get_or_404(id)
 
-    bakery = Bakery.query.filter_by(id=id).first()
-    bakery_serialized = bakery.to_dict()
-    return make_response ( bakery_serialized, 200  )
+    if 'name' in request.form:
+        bakery.name = request.form['name']
+
+    db.session.commit()
+
+    return jsonify(bakery.serialize())
+
+@app.route('/baked_goods/<int:id>', methods=['DELETE'])
+def delete_baked_goods(id):
+    baked_good = BakedGood.query.filter(BakedGood.id == id).first()
+    db.session.delete(baked_good)
+    db.session.commit()
+
+    response_body = {
+        "delete_successful": True,
+        "message": "Review deleted."
+    }
+    response = make_response(
+        response_body,
+        200
+    )
+
+    return response
+
+@app.route('/baked_goods', methods=['POST'])
+def create_baked_good():
+    name = request.form['name']
+    price = float(request.form['price'])
+    bakery_id = int(request.form['bakery_id'])
+
+    baked_good = BakedGood(name=name, price=price, bakery_id=bakery_id)
+    db.session.add(baked_good)
+    db.session.commit()
+
+    return jsonify(baked_good.to_dict()), 201
 
 @app.route('/baked_goods/by_price')
 def baked_goods_by_price():
@@ -46,4 +79,4 @@ def most_expensive_baked_good():
     return make_response( most_expensive_serialized,   200  )
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(port=5557, debug=True)
