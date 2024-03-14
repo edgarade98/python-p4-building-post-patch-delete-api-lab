@@ -3,7 +3,7 @@
 from flask import Flask, request, make_response, jsonify
 from flask_migrate import Migrate
 
-from server.models import db, Bakery, BakedGood
+from models import db, Bakery, BakedGood
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -23,16 +23,17 @@ def bakeries():
     bakeries = [bakery.to_dict() for bakery in Bakery.query.all()]
     return make_response(  bakeries,   200  )
 
-@app.route('/bakeries/<int:id>', methods=['PATCH'])
-def update_bakery(id):
-    bakery = Bakery.query.get_or_404(id)
+@app.route('/bakeries/<int:id>' , methods=['PATCH'])
+def bakery_by_id(id):
 
+    bakery = Bakery.query.filter_by(id=id).first()
     if 'name' in request.form:
-        bakery.name = request.form['name']
+        bakery.name=request.form['name']
+    if 'created_at' in request.form:
+        bakery.created_at=request.form['created_at']
+    bakery_serialized = bakery.to_dict()
+    return make_response ( bakery_serialized, 200  )
 
-    db.session.commit()
-
-    return jsonify(bakery.serialize())
 
 @app.route('/baked_goods/<int:id>', methods=['DELETE'])
 def delete_baked_goods(id):
